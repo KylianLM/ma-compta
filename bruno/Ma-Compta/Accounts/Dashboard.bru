@@ -1,0 +1,74 @@
+meta {
+  name: Dashboard
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/dashboard
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{auth_token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.totals_by_currency: isArray
+  res.body.accounts_by_type: isArray
+  res.body.total_accounts: isNumber
+}
+
+tests {
+  test("Dashboard should have summary data", function() {
+    expect(res.body).to.have.property('totals_by_currency');
+    expect(res.body).to.have.property('accounts_by_type');
+    expect(res.body).to.have.property('total_accounts');
+    expect(res.body).to.have.property('active_accounts');
+  });
+  
+  test("Totals by currency should be properly formatted", function() {
+    if (res.body.totals_by_currency.length > 0) {
+      const currencyTotal = res.body.totals_by_currency[0];
+      expect(currencyTotal).to.have.property('currency');
+      expect(currencyTotal).to.have.property('total_cents');
+      expect(currencyTotal).to.have.property('total_formatted');
+      expect(currencyTotal).to.have.property('accounts_count');
+    }
+  });
+}
+
+docs {
+  # Dashboard Summary
+  
+  Returns a summary of all accounts for the authenticated user.
+  
+  ## Response Format
+  
+  ```json
+  {
+    "totals_by_currency": [
+      {
+        "currency": "EUR",
+        "total_cents": 1105120,
+        "total_formatted": "11 051,20 €",
+        "accounts_count": 5
+      }
+    ],
+    "accounts_by_type": [
+      {
+        "type": "checking",
+        "type_label": "Compte courant",
+        "total_cents": 270000,
+        "accounts_count": 2
+      }
+    ],
+    "total_accounts": 10,
+    "active_accounts": 8
+  }
+  ```
+}

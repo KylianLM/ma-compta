@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Ma-Compta",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

@@ -1,0 +1,80 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/login
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{user_email}}",
+    "password": "{{user_password}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.token: isString
+  res.body.user.email: eq {{user_email}}
+}
+
+script:post-response {
+  // Sauvegarder le token pour les autres requêtes
+  if (res.body.token) {
+    bru.setEnvVar("auth_token", res.body.token);
+  }
+}
+
+tests {
+  test("Login should return user and token", function() {
+    expect(res.body).to.have.property('user');
+    expect(res.body).to.have.property('token');
+    expect(res.body.user).to.have.property('email');
+    expect(res.body.token).to.be.a('string');
+  });
+  
+  test("Token should be saved to environment", function() {
+    expect(bru.getEnvVar("auth_token")).to.be.a('string');
+  });
+}
+
+docs {
+  # Login
+  
+  Authenticate user and get API token.
+  
+  ## Request Body
+  
+  ```json
+  {
+    "email": "test@macompta.local",
+    "password": "password"
+  }
+  ```
+  
+  ## Response
+  
+  ```json
+  {
+    "user": {
+      "id": 1,
+      "name": "Test User",
+      "email": "test@macompta.local"
+    },
+    "token": "1|abc123...",
+    "token_type": "Bearer"
+  }
+  ```
+  
+  The token is automatically saved to the `auth_token` environment variable.
+}

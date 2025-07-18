@@ -1,0 +1,93 @@
+meta {
+  name: List accounts
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/accounts
+  body: none
+  auth: none
+}
+
+params:query {
+  active_only: true
+  ~type: checking
+  ~currency: EUR
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{auth_token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isArray
+  res.body.data[0].id: isNumber
+  res.body.data[0].name: isString
+  res.body.data[0].type.value: isString
+  res.body.data[0].balance.cents: isNumber
+}
+
+tests {
+  test("Response should have data array", function() {
+    expect(res.body).to.have.property('data');
+    expect(res.body.data).to.be.an('array');
+  });
+  
+  test("Each account should have required fields", function() {
+    if (res.body.data.length > 0) {
+      const account = res.body.data[0];
+      expect(account).to.have.property('id');
+      expect(account).to.have.property('name');
+      expect(account).to.have.property('type');
+      expect(account).to.have.property('balance');
+      expect(account).to.have.property('currency');
+    }
+  });
+}
+
+docs {
+  # List User Accounts
+  
+  Returns a list of all accounts for the authenticated user.
+  
+  ## Query Parameters
+  
+  - `active_only` (boolean): Only return active accounts
+  - `type` (string): Filter by account type (checking, savings, credit, investment)
+  - `currency` (string): Filter by currency (EUR, USD, GBP, etc.)
+  
+  ## Response Format
+  
+  Returns an array of account objects with the following structure:
+  
+  ```json
+  {
+    "data": [
+      {
+        "id": 1,
+        "name": "Compte courant BNP",
+        "type": {
+          "value": "checking",
+          "label": "Compte courant",
+          "icon": "credit-card",
+          "is_debt": false
+        },
+        "balance": {
+          "cents": 185075,
+          "decimal": 1850.75,
+          "formatted": "1 850,75 €"
+        },
+        "currency": {
+          "code": "EUR",
+          "symbol": "€",
+          "name": "Euro"
+        }
+      }
+    ]
+  }
+  ```
+}
